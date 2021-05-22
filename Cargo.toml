@@ -1,8 +1,10 @@
 [package]
 name = "php-scanner"
+description = "A tool to search for PHP malware"
 version = "0.2.0"
 authors = ["David Athay <ko2fan@gmail.com>"]
 edition = "2018"
+license-file = "LICENSE"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
