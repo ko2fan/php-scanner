@@ -1,6 +1,6 @@
 [package]
 name = "php-scanner"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["David Athay <ko2fan@gmail.com>"]
 edition = "2018"
 

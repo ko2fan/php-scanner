@@ -35,7 +35,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     let logger = builder.build().unwrap();
 
     let mut compiler = Compiler::new()?;
-    compiler.add_rules_file("php.yar")?;
+    match compiler.add_rules_file("php.yar") {
+        Ok(()) => (),
+        Err(_) => compiler.add_rules_file("/usr/share/php-scanner/php.yar")?,
+    }
     let rules = Arc::new(compiler.compile_rules()?);
 
     let mut files_list = Vec::new();
