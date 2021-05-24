@@ -25,7 +25,7 @@ fn build_file_list(directory : &str) -> Vec<OsString> {
 
 fn main() -> Result<(), Box<dyn Error>> {
     let matches = clap::App::new("php-scanner")
-        .version("0.2")
+        .version("0.2.1")
         .author("David Athay <ko2fan@gmail.com>")
         .about("Scans files for php malware")
         .args_from_usage("<directory> 'Sets the directory to scan'")
