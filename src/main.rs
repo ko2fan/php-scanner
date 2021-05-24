@@ -59,7 +59,6 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     loop {
 
-        // app.run_scan();
         let num_threads;
         let files_left = files_list.len() - files_scanned;
         if files_left > 5 {
@@ -78,9 +77,18 @@ fn main() -> Result<(), Box<dyn Error>> {
         for t in 0..num_threads {
             let file = files_to_scan[t].clone();
             let rules = rules.clone();
-            children.push(thread::spawn(move || -> (OsString, Vec<Rule>) {
-                (file.clone(), rules.scan_file(&file, 5).unwrap())
-            }));
+            let res = rules.scan_file(&file, 5);
+            match res {
+                Ok(f)=> {
+                    children.push(thread::spawn(move || -> (OsString, Vec<Rule>) {
+                        (file.clone(), f)
+                    }));
+                },
+                Err(e)=> {
+                    println!("Unable to scan {:?} {:?}", file, e);
+                    info!(logger, "Unable to scan {:?} {:?}", file, e);
+                }
+            }
         }
 
         for c in children {
@@ -89,7 +97,6 @@ fn main() -> Result<(), Box<dyn Error>> {
             files_scanned += 1;
         }
 
-        // app.update()?;
         progress = (100.0 - ((files_list.len() - files_scanned) as f32 / files_list.len() as f32 * 100.0)) as u16;
 
         if progress == 100 {
