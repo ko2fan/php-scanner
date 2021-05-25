@@ -1,8 +1,8 @@
 use std::{collections::HashMap, error::Error, ffi::OsString, sync::Arc, thread, time::SystemTime};
 use yara::*;
-use glob::glob;
+use walkdir::{WalkDir, DirEntry};
 
-use slog::{Logger, debug, error, info};
+use slog::{Logger, info};
 use sloggers::Build;
 use sloggers::file::FileLoggerBuilder;
 
@@ -10,13 +10,23 @@ fn log_matches(logger: &Logger, identifier: &str, file: &OsString) {
     info!(logger, "Found {} in {}", identifier, file.to_str().unwrap());
 }
 
+fn is_php_file(entry: &DirEntry) -> bool {
+    entry.file_name()
+         .to_str()
+         .map(|s| s.ends_with(".php"))
+         .unwrap_or(false)
+}
+
+
 fn build_file_list(directory : &str) -> Vec<OsString> {
     let mut result = Vec::new();
-    let pattern = String::from(directory) + "/**/*.php";
-    for entry in glob(pattern.as_str()).expect("Failed to read glob pattern") {
-        match entry {
-            Ok(path) => result.push(path.into_os_string()),
-            Err(e) => println!("{:?}", e),
+    for e in WalkDir::new(directory).into_iter().filter_entry(|e| is_php_file(e) || e.file_type().is_dir()) {
+        let e = match e {
+            Ok(e) => e,
+            Err(_) => continue,
+        };
+        if e.metadata().unwrap().is_file() {
+            result.push(e.path().to_path_buf().into_os_string());
         }
     }
 
@@ -25,7 +35,7 @@ fn build_file_list(directory : &str) -> Vec<OsString> {
 
 fn main() -> Result<(), Box<dyn Error>> {
     let matches = clap::App::new("php-scanner")
-        .version("0.2.1")
+        .version("0.3.0")
         .author("David Athay <ko2fan@gmail.com>")
         .about("Scans files for php malware")
         .args_from_usage("<directory> 'Sets the directory to scan'")
@@ -116,6 +126,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
     
     println!("Scanned {} files and found {} matches in {} seconds", files_scanned, num_matches, elapsed);
+    info!(logger, "Scanned {} files and found {} matches in {} seconds", files_scanned, num_matches, elapsed);
 
     Ok(())
 }
