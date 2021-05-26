@@ -17,4 +17,4 @@ ARGS:
     <directory>    Sets the directory to scan (it will also scan all directories inside)
 ```
 
-Matches are saved to scan.log
+Matches are saved to /var/log/scan.log if possible, otherwise ./scan.log

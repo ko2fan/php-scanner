@@ -113,12 +113,13 @@ fn main() -> Result<(), Box<dyn Error>> {
         for t in 0..num_threads {
             let file = files_to_scan[t].clone();
             let rules = rules.clone();
+            let log = logger.clone();
             children.push(thread::spawn(move || -> Option<(OsString, Vec<Rule>)> {
                 match rules.scan_file(&file, timeout) {
                     Ok(f) => Some((file.clone(), f)),
                     Err(e)=> {
                         println!("Unable to scan {:?} {:?}", file, e);
-                        //info!(logger, "Unable to scan {:?} {:?}", file, e);
+                        info!(log, "Unable to scan {:?} {:?}", file, e);
                         None
                     }
                 }
