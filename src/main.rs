@@ -35,7 +35,7 @@ fn build_file_list(directory : &str) -> Vec<OsString> {
 
 fn main() -> Result<(), Box<dyn Error>> {
     let matches = clap::App::new("php-scanner")
-        .version("0.4.0")
+        .version("0.4.1")
         .author("David Athay <ko2fan@gmail.com>")
         .about("Scans files for php malware")
         .args_from_usage("<directory> 'Sets the directory to scan'
@@ -97,7 +97,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         let num_threads;
         let files_left = files_list.len() - files_scanned;
-        if files_left > 5 {
+        if files_left > max_threads {
             num_threads = max_threads;
         } else if files_left > 0 {
             num_threads = files_left;
