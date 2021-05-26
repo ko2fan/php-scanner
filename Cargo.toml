@@ -1,7 +1,7 @@
 [package]
 name = "php-scanner"
 description = "A tool to search for PHP malware"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["David Athay <ko2fan@gmail.com>"]
 edition = "2018"
 license-file = "LICENSE"
@@ -14,3 +14,12 @@ clap = "2.33"
 walkdir = "2.3.2"
 slog = "2.7"
 sloggers = "1.0"
+
+[package.metadata.rpm]
+package = "php-scanner"
+
+[package.metadata.rpm.cargo]
+buildflags = ["--release"]
+
+[package.metadata.rpm.targets]
+php-scanner = { path = "/usr/bin/php-scanner" }

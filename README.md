@@ -6,7 +6,15 @@ It is licensed under the BSD license.
 
 ## Usage
 
-php-scanner \<directory\>
+php-scanner [OPTIONS] \<directory\>
 
-Directory should be the path to scan, it searches it recursively.
-Matches are shown in scan.log
+```
+OPTIONS:
+    -c <threads>        Set the maximum number of threads to use
+    -t <timeout>        Set the timeout on scanning each file
+
+ARGS:
+    <directory>    Sets the directory to scan (it will also scan all directories inside)
+```
+
+Matches are saved to scan.log

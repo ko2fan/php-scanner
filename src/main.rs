@@ -35,10 +35,12 @@ fn build_file_list(directory : &str) -> Vec<OsString> {
 
 fn main() -> Result<(), Box<dyn Error>> {
     let matches = clap::App::new("php-scanner")
-        .version("0.3.0")
+        .version("0.4.0")
         .author("David Athay <ko2fan@gmail.com>")
         .about("Scans files for php malware")
-        .args_from_usage("<directory> 'Sets the directory to scan'")
+        .args_from_usage("<directory> 'Sets the directory to scan'
+        -c [threads] 'Set the maximum number of threads to use'
+        -t [timeout] 'Set the timeout on scanning each file'")
         .get_matches();
 
     let builder = FileLoggerBuilder::new("scan.log");
@@ -62,17 +64,34 @@ fn main() -> Result<(), Box<dyn Error>> {
         files_list = build_file_list(dir);
     }
 
+    let max_threads;
+    if let Some(threads) = matches.value_of("c") {
+        max_threads = threads.parse::<usize>().unwrap_or(5);
+    } else {
+        max_threads = 5;
+    }
+
+    let timeout;
+    if let Some(t) = matches.value_of("t") {
+        timeout = t.parse::<u16>().unwrap_or(5);
+    } else {
+        timeout = 5;
+    }
+
+    info!(logger, "Using max of {} threads, default is 5", max_threads);
+    info!(logger, "Using timeout of {} seconds. Default is 5 seconds", timeout);
+
     // start timing
     let timer = SystemTime::now();
 
-    let mut progress = 0;
+    let mut progress;
 
     loop {
 
         let num_threads;
         let files_left = files_list.len() - files_scanned;
         if files_left > 5 {
-            num_threads = 5;
+            num_threads = max_threads;
         } else if files_left > 0 {
             num_threads = files_left;
         } else {
@@ -87,27 +106,29 @@ fn main() -> Result<(), Box<dyn Error>> {
         for t in 0..num_threads {
             let file = files_to_scan[t].clone();
             let rules = rules.clone();
-            let res = rules.scan_file(&file, 5);
-            match res {
-                Ok(f)=> {
-                    children.push(thread::spawn(move || -> (OsString, Vec<Rule>) {
-                        (file.clone(), f)
-                    }));
-                },
-                Err(e)=> {
-                    println!("Unable to scan {:?} {:?}", file, e);
-                    info!(logger, "Unable to scan {:?} {:?}", file, e);
+            children.push(thread::spawn(move || -> Option<(OsString, Vec<Rule>)> {
+                match rules.scan_file(&file, timeout) {
+                    Ok(f) => Some((file.clone(), f)),
+                    Err(e)=> {
+                        println!("Unable to scan {:?} {:?}", file, e);
+                        //info!(logger, "Unable to scan {:?} {:?}", file, e);
+                        None
+                    }
                 }
-            }
+            }));
         }
 
         for c in children {
             let result = c.join().unwrap();
-            results.insert(result.0, result.1);
+            if let Some(result) = result {
+                results.insert(result.0, result.1);
+            }
             files_scanned += 1;
         }
 
         progress = (100.0 - ((files_list.len() - files_scanned) as f32 / files_list.len() as f32 * 100.0)) as u16;
+
+        println!("{}% complete", progress);
 
         if progress == 100 {
             break;
