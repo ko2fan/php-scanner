@@ -1,4 +1,4 @@
-use std::{collections::HashMap, error::Error, ffi::OsString, sync::Arc, thread, time::SystemTime};
+use std::{collections::HashMap, error::Error, ffi::OsString, fs::OpenOptions, sync::Arc, thread, time::SystemTime};
 use yara::*;
 use walkdir::{WalkDir, DirEntry};
 
@@ -43,7 +43,14 @@ fn main() -> Result<(), Box<dyn Error>> {
         -t [timeout] 'Set the timeout on scanning each file'")
         .get_matches();
 
-    let builder = FileLoggerBuilder::new("scan.log");
+    let logpath;
+    if OpenOptions::new().write(true).create(true).open("/var/log/scan.log").is_ok() {
+        logpath = "/var/log/scan.log";
+    } else {
+        logpath = "scan.log";
+    }
+
+    let builder = FileLoggerBuilder::new(logpath);
     let logger = builder.build().unwrap();
 
     let mut compiler = Compiler::new()?;
